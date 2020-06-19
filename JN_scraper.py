@@ -105,7 +105,7 @@ def script_builder(intro_section, items_section):
 	soup = items_section
 
 	soup.style.replace_with(intro_soup)
-	open('test.html', 'w').write(soup.prettify())
+	open('index.html', 'w').write(soup.prettify())
 	return soup
 
 
