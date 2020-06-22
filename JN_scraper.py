@@ -46,8 +46,8 @@ def sanitize_title(title):
 	#pass
 
 
-def obtained_dict_maker(page_path):
-	soup = get_webpage_soup(page_path)
+def obtained_dict_maker(page_path, refresh_from_web=False):
+	soup = get_webpage_soup(page_path, get_new=refresh_from_web)
 
 	total_dict = {}
 	item_list = soup.find_all('img', class_='item-result-image')
@@ -112,6 +112,13 @@ def script_builder(intro_section, items_section):
 
 # Next more advanced step: use Selenium to request petpage code from https://items.jellyneo.net/wishlists/code/225909/
 
-mydict = obtained_dict_maker('JNmywishlist.html')
+refresh = True
+
+if refresh:
+	path = JN_wishlist_URL
+else:
+	path = 'JNmywishlist.html'
+
+mydict = obtained_dict_maker(page_path=path, refresh_from_web=refresh)
 collection_items = process_html_items(raw_JN_output_cached, mydict)
 script_builder(intro_section=intro_section_html, items_section=collection_items)
