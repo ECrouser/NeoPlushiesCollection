@@ -112,7 +112,7 @@ def script_builder(intro_section, items_section):
 
 # Next more advanced step: use Selenium to request petpage code from https://items.jellyneo.net/wishlists/code/225909/
 
-refresh = True
+refresh = False
 
 if refresh:
 	path = JN_wishlist_URL
