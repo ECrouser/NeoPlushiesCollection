@@ -1,5 +1,3 @@
-
-
 import requests
 from bs4 import BeautifulSoup
 import re
@@ -8,8 +6,6 @@ import copy
 # import myotherfile
 # myotherfile.myfunc()
 
-# r
-# rb
 with open("JNplushielist.html",'r') as f:
 	raw_JN_output_cached = f.read() # f.readlines() -> []
 with open("collectionpage_intro_section.html",'r') as f:
@@ -43,8 +39,15 @@ def sanitize_title(title):
 	san_title = re.sub('\W', '_', title)
 
 	return san_title
-	#pass
 
+
+def count_obtained(page_path, refresh_from_web=False):
+	soup = get_webpage_soup(page_path, get_new=refresh_from_web)
+	return(len(soup.find_all('a', class_='wishlist-obtained')))
+
+def count_all_items(page_path, refresh_from_web=False):
+	soup = get_webpage_soup(page_path, get_new=refresh_from_web)
+	return(len(soup.find_all('img', class_='item-result-image')))
 
 def obtained_dict_maker(page_path, refresh_from_web=False):
 	soup = get_webpage_soup(page_path, get_new=refresh_from_web)
@@ -79,6 +82,59 @@ def obtained_dict_maker(page_path, refresh_from_web=False):
 # 			item = re.sub(' ', '-', san_title)
 # 	return item_list
 
+def add_progress_bar_css(intro_section, numerator, denominator):
+	intro_soup = BeautifulSoup(intro_section, 'html.parser')
+	
+	progress_perc = str(int((numerator / denominator) * 100))
+	progress_bar_css = ["""
+	#progress-bar {
+		width: 100%;
+		background-color: grey;
+	}
+
+	#progress {
+		width: """,
+	progress_perc,
+	"""%;
+  		padding: 8px 0;
+  		background-color: #0d4a6f;
+	}
+	"""]
+	progress_bar_css = ''.join(progress_bar_css)
+	#print(progress_bar_css)
+	progress_bar_css = BeautifulSoup(progress_bar_css, 'html.parser')
+	#intro_style = intro_soup.find('style', type='text/css')
+	intro_soup.style.append(progress_bar_css)
+
+	return intro_soup
+
+def add_progress_bar_html(items_section, numerator, denominator):
+	items_soup = items_section
+
+	progress_perc = str(int((numerator / denominator) * 100))
+	progress_bar_html = ["""
+	<tr>
+	<center>
+	<div id="progress-bar">
+		<div id="progress">""",
+	str(numerator),
+	" out of ",
+	str(denominator),
+	" collected (",
+	progress_perc,
+	"""%)</div>
+	</div> <p>
+	</center>
+	</tr>
+	"""]
+	progress_bar_html = ''.join(progress_bar_html)
+	progress_bar_html = BeautifulSoup(progress_bar_html, 'html.parser')
+	
+	wishlist_table = items_soup.find('table', class_='wishlist-table')
+	wishlist_table.insert(0, progress_bar_html)
+
+	return items_soup
+
 
 def process_html_items(html_raw, obtained_dict):
 	soup = BeautifulSoup(html_raw, 'html.parser')
@@ -91,7 +147,6 @@ def process_html_items(html_raw, obtained_dict):
 		dict_item = obtained_dict[counter]
 		item['class'] = 'container'
 		image = item.find('img')
-#		image['class'] = dict_item[0]
 		if dict_item[1] == False:
 			image['class'] = 'gray'
 			overlay_div = BeautifulSoup('<div><b>Still Needed</b></div>', 'html.parser')
@@ -101,8 +156,12 @@ def process_html_items(html_raw, obtained_dict):
 	return soup
 
 def script_builder(intro_section, items_section):
-	intro_soup = BeautifulSoup(intro_section, 'html.parser')
-	soup = items_section
+	numerator = count_obtained(page_path='JNmywishlist.html')
+	denominator = count_all_items(page_path='JNmywishlist.html')
+	
+	#intro_soup = BeautifulSoup(intro_section, 'html.parser')
+	intro_soup = add_progress_bar_css(intro_section, numerator, denominator)
+	soup = add_progress_bar_html(items_section, numerator, denominator)
 
 	soup.style.replace_with(intro_soup)
 	open('index.html', 'w').write(soup.prettify())
@@ -112,7 +171,7 @@ def script_builder(intro_section, items_section):
 
 # Next more advanced step: use Selenium to request petpage code from https://items.jellyneo.net/wishlists/code/225909/
 
-refresh = False
+refresh = True
 
 if refresh:
 	path = JN_wishlist_URL
